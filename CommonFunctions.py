@@ -77,3 +77,32 @@ def plot_numeric_solutions(diff_equation, x, f, initial_conditions_y, initial_x,
             y_values[y_values > threshold[1]] = np.nan
         axes.plot(x_range, y_values, label=f'$y({initial_x}) = {y0}$')
 
+
+def convert_equations_to_meshgrid(equations, variables, params, normalize=False):
+    equation_x, equation_v = equations
+    x_var, v_var = variables
+    x_0, x_k, x_step, v_0, v_k, v_step = params
+    lambdified_x = sp.lambdify([x_var, v_var], equation_x.rhs, 'numpy')
+    lambdified_v = sp.lambdify([x_var, v_var], equation_v.rhs, 'numpy')
+    X, V = np.meshgrid(np.arange(x_0, x_k + x_step, x_step), np.arange(v_0, v_k + v_step, v_step))
+    dx = lambdified_x(X, V)
+    dv = lambdified_v(X, V)
+    if normalize:
+        norm = np.sqrt(dx ** 2 + dv ** 2)
+        dx = dx / norm
+        dv = dv / norm
+    return X, V, dx, dv
+
+
+def phase_portrait(equations, variables, params, axes, normalize=False):
+    meshgrid = convert_equations_to_meshgrid(equations, variables, params, normalize=normalize)
+    axes.quiver(*meshgrid, pivot='mid')
+    axes.set(xlabel=f'${sp.latex(variables[0])}$', ylabel=f'${sp.latex(variables[1])}$')
+
+
+def phase_trajectory(diff_solution, t, params):
+    t_0, t_k, quality = params
+    t_values = np.linspace(t_0, t_k, quality)
+    lambdified_x = sp.lambdify(t, diff_solution.rhs, 'numpy')
+    lambdified_v = sp.lambdify(t, diff_solution.rhs.diff(t), 'numpy')
+    return t_values, lambdified_x(t_values), lambdified_v(t_values)
