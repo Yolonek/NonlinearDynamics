@@ -89,6 +89,7 @@ def convert_equations_to_meshgrid(equations, variables, params, normalize=False)
     dv = lambdified_v(X, V)
     if normalize:
         norm = np.sqrt(dx ** 2 + dv ** 2)
+        norm[norm == 0] = 1
         dx = dx / norm
         dv = dv / norm
     return X, V, dx, dv
@@ -100,9 +101,18 @@ def phase_portrait(equations, variables, params, axes, normalize=False):
     axes.set(xlabel=f'${sp.latex(variables[0])}$', ylabel=f'${sp.latex(variables[1])}$')
 
 
-def phase_trajectory(diff_solution, t, params):
+def phase_trajectory(diff_solution, t, params, threshold=None, second_solution=None):
     t_0, t_k, quality = params
     t_values = np.linspace(t_0, t_k, quality)
     lambdified_x = sp.lambdify(t, diff_solution.rhs, 'numpy')
-    lambdified_v = sp.lambdify(t, diff_solution.rhs.diff(t), 'numpy')
-    return t_values, lambdified_x(t_values), lambdified_v(t_values)
+    if second_solution is None:
+        lambdified_v = sp.lambdify(t, diff_solution.rhs.diff(t), 'numpy')
+    else:
+        lambdified_v = sp.lambdify(t, second_solution.rhs, 'numpy')
+    x_values, v_values = lambdified_x(t_values), lambdified_v(t_values)
+    if threshold is not None:
+        x_values[x_values < threshold[0]] = np.nan
+        x_values[x_values > threshold[1]] = np.nan
+        v_values[v_values < threshold[2]] = np.nan
+        v_values[v_values > threshold[3]] = np.nan
+    return t_values, x_values, v_values
