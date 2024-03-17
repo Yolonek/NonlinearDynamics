@@ -116,3 +116,46 @@ def phase_trajectory(diff_solution, t, params, threshold=None, second_solution=N
         v_values[v_values < threshold[2]] = np.nan
         v_values[v_values > threshold[3]] = np.nan
     return t_values, x_values, v_values
+
+
+def find_fixed_point_abcd(P, Q, x, y):
+    a = P.rhs.diff(x)
+    b = P.rhs.diff(y)
+    c = Q.rhs.diff(x)
+    d = Q.rhs.diff(y)
+    return a, b, c, d
+
+
+def find_fixed_point_parameters(P, Q, x, y, fixed_point=None):
+    a, b, c, d = find_fixed_point_abcd(P, Q, x, y)
+    q = a*d - b*c
+    p = -(a + d)
+    r = p**2 - 4*q
+    if fixed_point is not None:
+        x_0, y_0 = fixed_point
+        q = q.subs([(x, x_0), (y, y_0)]).evalf()
+        p = p.subs([(x, x_0), (y, y_0)]).evalf()
+        r = r.subs([(x, x_0), (y, y_0)]).evalf()
+    return q, p, r
+
+
+def classify_fixed_point(q, p, r):
+    if q < 0 < r:
+        return 'saddle'
+    elif q == 0 and r >= 0:
+        return 'higher order'
+    elif q > 0:
+        if p > 0 > r:
+            return 'stable focal'
+        elif p > 0 and r >= 0:
+            return 'stable nodal'
+        elif p == 0 and r < 0:
+            return 'vortex/focal'
+        elif p < 0 and r < 0:
+            return 'unstable focal'
+        elif p < 0 <= r:
+            return 'unstable nodal'
+        else:
+            return 'unclassified'
+    else:
+        return 'unclassified'
