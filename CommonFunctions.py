@@ -38,6 +38,17 @@ def solve_second_order_differential_equation(equation, x, f, lower_bound, upper_
     return solve_differential_equation(*params)
 
 
+def solve_numerically_system_of_equations(expressions, functions, t, boundaries, init_t, init_func_list, output_size):
+    lower_bound, upper_bound = boundaries
+    lamdified_eq = sp.lambdify((t, functions), expressions, modules='numpy')
+
+    def system_of_equations(t, y):
+        return lamdified_eq(t, y)
+
+    params = system_of_equations, lower_bound, upper_bound, init_t, init_func_list, output_size
+    return solve_differential_equation(*params)
+
+
 def solve_differential_equation(function, lower_bound, upper_bound, initial_x, initial_y_list, output_size):
     if lower_bound < initial_x < upper_bound:
         span_backward = (initial_x, lower_bound)
@@ -58,9 +69,24 @@ def solve_differential_equation(function, lower_bound, upper_bound, initial_x, i
 
 
 def solve_equation_with_scipy(function, span, initial_y_list, output_size):
-    x_range = np.linspace(*span, output_size)
-    solution = solve_ivp(function, span, initial_y_list, t_eval=x_range, dense_output=True)
-    return x_range, solution.y
+    solution = solve_ivp(function, span, initial_y_list, t_eval=np.linspace(*span, output_size), dense_output=True)
+    return solution.t, solution.y
+
+
+def calculate_numerically_list_of_trajectories(expressions, functions, t, t_bound, t_0, boundaries, inits, output_size):
+    trajectories = []
+    for initial_point in inits:
+        t_range, trajectory = solve_numerically_system_of_equations(
+            expressions, functions, t, t_bound, t_0, initial_point, output_size
+        )
+        trajectory_axes = []
+        for index, (lower_bound, upper_bound) in enumerate(boundaries):
+            trajectory_axis = trajectory[index]
+            trajectory_axis[trajectory_axis < lower_bound] = np.nan
+            trajectory_axis[trajectory_axis > upper_bound] = np.nan
+            trajectory_axes.append(trajectory_axis)
+        trajectories.append(tuple(trajectory_axes))
+    return trajectories
 
 
 def plot_numeric_solutions(diff_equation, x, f, initial_conditions_y, initial_x, span, size, axes, threshold=None):
