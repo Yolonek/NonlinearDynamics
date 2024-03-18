@@ -1,6 +1,7 @@
 import sympy as sp
 import numpy as np
 from scipy.integrate import solve_ivp
+from scipy.ndimage import gaussian_filter
 
 
 def n_components_of_function(function, variable, n=1):
@@ -104,7 +105,7 @@ def plot_numeric_solutions(diff_equation, x, f, initial_conditions_y, initial_x,
         axes.plot(x_range, y_values, label=f'$y({initial_x}) = {y0}$')
 
 
-def convert_equations_to_meshgrid(equations, variables, params, normalize=False):
+def convert_equations_to_meshgrid(equations, variables, params, normalize=False, damping_factor=0):
     equation_x, equation_v = equations
     x_var, v_var = variables
     x_0, x_k, x_step, v_0, v_k, v_step = params
@@ -113,16 +114,22 @@ def convert_equations_to_meshgrid(equations, variables, params, normalize=False)
     X, V = np.meshgrid(np.arange(x_0, x_k + x_step, x_step), np.arange(v_0, v_k + v_step, v_step))
     dx = lambdified_x(X, V)
     dv = lambdified_v(X, V)
+    norm = np.sqrt(dx ** 2 + dv ** 2)
     if normalize:
-        norm = np.sqrt(dx ** 2 + dv ** 2)
         norm[norm == 0] = 1
         dx = dx / norm
         dv = dv / norm
+    else:
+        denominator = ((norm / norm.mean()) ** damping_factor)
+        dx = dx / denominator
+        dv = dv / denominator
     return X, V, dx, dv
 
 
-def phase_portrait(equations, variables, params, axes, normalize=False):
-    meshgrid = convert_equations_to_meshgrid(equations, variables, params, normalize=normalize)
+def phase_portrait(equations, variables, params, axes, normalize=False, damping_factor=0):
+    meshgrid = convert_equations_to_meshgrid(equations, variables, params,
+                                             normalize=normalize,
+                                             damping_factor=damping_factor)
     axes.quiver(*meshgrid, pivot='mid')
     axes.set(xlabel=f'${sp.latex(variables[0])}$', ylabel=f'${sp.latex(variables[1])}$')
 
