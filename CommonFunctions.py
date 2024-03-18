@@ -1,7 +1,7 @@
 import sympy as sp
 import numpy as np
 from scipy.integrate import solve_ivp
-from scipy.ndimage import gaussian_filter
+from matplotlib import pyplot as plt
 
 
 def n_components_of_function(function, variable, n=1):
@@ -74,17 +74,20 @@ def solve_equation_with_scipy(function, span, initial_y_list, output_size):
     return solution.t, solution.y
 
 
-def calculate_numerically_list_of_trajectories(expressions, functions, t, t_bound, t_0, boundaries, inits, output_size):
+def calculate_numerically_list_of_trajectories(expressions, functions, t, t_bound, t_0, boundaries,
+                                               inits, output_size, with_t_array=False):
     trajectories = []
     for initial_point in inits:
         t_range, trajectory = solve_numerically_system_of_equations(
             expressions, functions, t, t_bound, t_0, initial_point, output_size
         )
-        trajectory_axes = []
+        trajectory_axes = [t_range] if with_t_array else []
         for index, (lower_bound, upper_bound) in enumerate(boundaries):
             trajectory_axis = trajectory[index]
-            trajectory_axis[trajectory_axis < lower_bound] = np.nan
-            trajectory_axis[trajectory_axis > upper_bound] = np.nan
+            if lower_bound is not None:
+                trajectory_axis[trajectory_axis < lower_bound] = np.nan
+            if upper_bound is not None:
+                trajectory_axis[trajectory_axis > upper_bound] = np.nan
             trajectory_axes.append(trajectory_axis)
         trajectories.append(tuple(trajectory_axes))
     return trajectories
@@ -115,8 +118,8 @@ def convert_equations_to_meshgrid(equations, variables, params, normalize=False,
     dx = lambdified_x(X, V)
     dv = lambdified_v(X, V)
     norm = np.sqrt(dx ** 2 + dv ** 2)
+    norm[norm < 1] = 1
     if normalize:
-        norm[norm == 0] = 1
         dx = dx / norm
         dv = dv / norm
     else:
@@ -192,3 +195,17 @@ def classify_fixed_point(q, p, r):
             return 'unclassified'
     else:
         return 'unclassified'
+
+
+def colormap_for_array(array, colormap_type='viridis'):
+    cmap = plt.get_cmap(colormap_type)
+    norm = plt.Normalize(array.min(), array.max())
+    return cmap, norm
+
+
+def plot_colored_line3d(x, y, z, array, axes, colormap_type='viridis', return_cmap=False):
+    cmap, norm = colormap_for_array(array, colormap_type=colormap_type)
+    for t in range(len(array) - 1):
+        axes.plot(x[t:t+2], y[t:t+2], z[t:t+2], color=cmap(norm(array[t])))
+    if return_cmap:
+        return cmap, norm
