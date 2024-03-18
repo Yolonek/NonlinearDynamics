@@ -209,3 +209,7 @@ def plot_colored_line3d(x, y, z, array, axes, colormap_type='viridis', return_cm
         axes.plot(x[t:t+2], y[t:t+2], z[t:t+2], color=cmap(norm(array[t])))
     if return_cmap:
         return cmap, norm
+
+
+def evaluate_list_of_equation_solutions(solutions):
+    return [tuple(component.evalf() for component in point) for point in solutions]
