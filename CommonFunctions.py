@@ -39,7 +39,8 @@ def solve_second_order_differential_equation(equation, x, f, lower_bound, upper_
     return solve_differential_equation(*params)
 
 
-def solve_numerically_system_of_equations(expressions, functions, t, boundaries, init_t, init_func_list, output_size):
+def solve_numerically_system_of_equations(expressions, functions, t, boundaries, init_t,
+                                          init_func_list, output_size, t_eval=None):
     lower_bound, upper_bound = boundaries
     lamdified_eq = sp.lambdify((t, functions), expressions, modules='numpy')
 
@@ -47,39 +48,43 @@ def solve_numerically_system_of_equations(expressions, functions, t, boundaries,
         return lamdified_eq(t, y)
 
     params = system_of_equations, lower_bound, upper_bound, init_t, init_func_list, output_size
-    return solve_differential_equation(*params)
+    return solve_differential_equation(*params, t_eval=t_eval)
 
 
-def solve_differential_equation(function, lower_bound, upper_bound, initial_x, initial_y_list, output_size):
-    if lower_bound < initial_x < upper_bound:
-        span_backward = (initial_x, lower_bound)
-        span_forward = (initial_x, upper_bound)
-        x_range_backward, sol_backward = solve_equation_with_scipy(function, span_backward, initial_y_list, output_size // 2)
-        x_range_forward, sol_forward = solve_equation_with_scipy(function, span_forward, initial_y_list, output_size // 2)
-        x_range = np.concatenate((x_range_backward[::-1], x_range_forward), axis=0)
+def solve_differential_equation(function, lower_bound, upper_bound, initial_t, initial_y_list, output_size, t_eval=None):
+    if t_eval is not None:
+        lower_bound, upper_bound = t_eval.min(), t_eval.max()
+    if lower_bound < initial_t < upper_bound:
+        span_backward = (initial_t, lower_bound)
+        span_forward = (initial_t, upper_bound)
+        t_range_backward, sol_backward = solve_equation_with_scipy(function, span_backward, initial_y_list, output_size // 2, t_eval=t_eval)
+        t_range_forward, sol_forward = solve_equation_with_scipy(function, span_forward, initial_y_list, output_size // 2, t_eval=t_eval)
+        t_range = np.concatenate((t_range_backward[::-1], t_range_forward), axis=0)
         sol = np.concatenate((sol_backward[::, ::-1], sol_forward), axis=1)
-    elif initial_x <= lower_bound:
-        span = (initial_x, upper_bound)
-        x_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size)
-    elif initial_x >= upper_bound:
-        span = (initial_x, lower_bound)
-        x_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size)
+    elif initial_t <= lower_bound:
+        span = (initial_t, upper_bound)
+        t_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=t_eval)
+    elif initial_t >= upper_bound:
+        span = (initial_t, lower_bound)
+        t_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=t_eval)
     else:
-        x_range, sol = np.array([]), np.array([])
-    return x_range, sol
+        t_range, sol = np.array([]), np.array([])
+    return t_range, sol
 
 
-def solve_equation_with_scipy(function, span, initial_y_list, output_size):
-    solution = solve_ivp(function, span, initial_y_list, t_eval=np.linspace(*span, output_size), dense_output=True)
+def solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=None):
+    if t_eval is None:
+        t_eval = np.linspace(*span, output_size)
+    solution = solve_ivp(function, span, initial_y_list, t_eval=t_eval, dense_output=True)
     return solution.t, solution.y
 
 
 def calculate_numerically_list_of_trajectories(expressions, functions, t, t_bound, t_0, boundaries,
-                                               inits, output_size, with_t_array=False):
+                                               inits, output_size, with_t_array=False, t_eval=None):
     trajectories = []
     for initial_point in inits:
         t_range, trajectory = solve_numerically_system_of_equations(
-            expressions, functions, t, t_bound, t_0, initial_point, output_size
+            expressions, functions, t, t_bound, t_0, initial_point, output_size, t_eval=t_eval
         )
         trajectory_axes = [t_range] if with_t_array else []
         for index, (lower_bound, upper_bound) in enumerate(boundaries):
