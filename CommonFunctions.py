@@ -118,11 +118,12 @@ def convert_equations_to_meshgrid(equations, variables, params, normalize=False,
     dx = lambdified_x(X, V)
     dv = lambdified_v(X, V)
     norm = np.sqrt(dx ** 2 + dv ** 2)
-    norm[norm < 1] = 1
     if normalize:
+        norm[norm == 0] = 1
         dx = dx / norm
         dv = dv / norm
     else:
+        norm[norm < 1] = 1
         denominator = ((norm / norm.mean()) ** damping_factor)
         dx = dx / denominator
         dv = dv / denominator
