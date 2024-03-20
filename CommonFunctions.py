@@ -66,9 +66,9 @@ def solve_numerically_system_of_equations(expressions, functions, t, t_values, i
 
 def solve_numerically_second_order_ode(diff_equation, x, t, t_values, init_t, init_func_list, method='RK45'):
     v = sp.Function('v')(t)
-    x_diff_eq = v
-    v_diff_eq = sp.solve(diff_equation, x.diff(t, 2)[0]).subs(x.diff(t), v)
-    params = [x_diff_eq, v_diff_eq], [x, v], t, t_values, init_t, init_func_list
+    x_expr = v
+    v_expr = sp.solve(diff_equation, x.diff(t, 2))[0].subs(x.diff(t), v)
+    params = [x_expr, v_expr], [x, v], t, t_values, init_t, init_func_list
     return solve_numerically_system_of_equations(*params, method=method)
 
 
