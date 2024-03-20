@@ -15,79 +15,72 @@ def orders_of_perturbation(terms, perturbation):
     return equation
 
 
-def evaluate_function(equation, variable, x_values, threshold=None):
-    lambdified_eq = sp.lambdify(variable, equation, 'numpy')
-    y_values = lambdified_eq(x_values)
+def evaluate_function(expression, variable, variable_values, threshold=None):
+    lambdified_eq = sp.lambdify(variable, expression, 'numpy')
+    function_values = lambdified_eq(variable_values)
     if threshold is not None:
-        y_values[y_values < threshold[0]] = np.nan
-        y_values[y_values > threshold[1]] = np.nan
-    return y_values
+        function_values[function_values < threshold[0]] = np.nan
+        function_values[function_values > threshold[1]] = np.nan
+    return function_values
 
 
-def solve_second_order_differential_equation(equation, x, f, lower_bound, upper_bound, initial_x, initial_y_dy,
-                                             output_size):
-    v = sp.Function('t')(x)
-    f_prime = v
-    v_prime = sp.solve(equation, f.diff(x, 2))[0].subs(f.diff(x), v)
-
-    lambdified_eq = sp.lambdify((f, v, x), [f_prime, v_prime], modules='numpy')
-
-    def second_order_equation(t, yv):
-        return lambdified_eq(*yv, t)
-
-    params = second_order_equation, lower_bound, upper_bound, initial_x, initial_y_dy, output_size
-    return solve_differential_equation(*params)
+def solve_equation_with_scipy(function, span, init_func_list, t_eval, method='RK45'):
+    solution = solve_ivp(function, span, init_func_list, t_eval=t_eval, dense_output=True, method=method)
+    return solution.t, solution.y
 
 
-def solve_numerically_system_of_equations(expressions, functions, t, boundaries, init_t,
-                                          init_func_list, output_size, t_eval=None):
-    lower_bound, upper_bound = boundaries
-    lamdified_eq = sp.lambdify((t, functions), expressions, modules='numpy')
-
-    def system_of_equations(t, y):
-        return lamdified_eq(t, y)
-
-    params = system_of_equations, lower_bound, upper_bound, init_t, init_func_list, output_size
-    return solve_differential_equation(*params, t_eval=t_eval)
-
-
-def solve_differential_equation(function, lower_bound, upper_bound, initial_t, initial_y_list, output_size, t_eval=None):
-    if t_eval is not None:
-        lower_bound, upper_bound = t_eval.min(), t_eval.max()
-    if lower_bound < initial_t < upper_bound:
-        span_backward = (initial_t, lower_bound)
-        span_forward = (initial_t, upper_bound)
-        t_range_backward, sol_backward = solve_equation_with_scipy(function, span_backward, initial_y_list, output_size // 2, t_eval=t_eval)
-        t_range_forward, sol_forward = solve_equation_with_scipy(function, span_forward, initial_y_list, output_size // 2, t_eval=t_eval)
+def solve_numerically_first_order_ode(function, t_values, init_t, init_func_list, method='RK45'):
+    lower_bound, upper_bound = t_values.min(), t_values.max()
+    if lower_bound < init_t < upper_bound:
+        split_index = np.searchsorted(t_values, init_t)
+        t_backward = t_values[:split_index][::-1]
+        t_forward = t_values[split_index:]
+        span_backward = (init_t, lower_bound)
+        span_forward = (init_t, upper_bound)
+        t_range_backward, sol_backward = solve_equation_with_scipy(
+            function, span_backward, init_func_list, t_backward, method=method)
+        t_range_forward, sol_forward = solve_equation_with_scipy(
+            function, span_forward, init_func_list, t_forward, method=method)
         t_range = np.concatenate((t_range_backward[::-1], t_range_forward), axis=0)
         sol = np.concatenate((sol_backward[::, ::-1], sol_forward), axis=1)
-    elif initial_t <= lower_bound:
-        span = (initial_t, upper_bound)
-        t_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=t_eval)
-    elif initial_t >= upper_bound:
-        span = (initial_t, lower_bound)
-        t_range, sol = solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=t_eval)
+    elif init_t <= lower_bound:
+        span = (init_t, upper_bound)
+        t_range, sol = solve_equation_with_scipy(function, span, init_func_list, t_values, method=method)
+    elif init_t >= upper_bound:
+        span = (init_t, lower_bound)
+        t_range, sol = solve_equation_with_scipy(function, span, init_func_list, t_values, method=method)
     else:
         t_range, sol = np.array([]), np.array([])
     return t_range, sol
 
 
-def solve_equation_with_scipy(function, span, initial_y_list, output_size, t_eval=None):
-    if t_eval is None:
-        t_eval = np.linspace(*span, output_size)
-    solution = solve_ivp(function, span, initial_y_list, t_eval=t_eval, dense_output=True)
-    return solution.t, solution.y
+def solve_numerically_system_of_equations(expressions, functions, t, t_values, init_t, init_func_list, method='RK45'):
+    lamdified_eq = sp.lambdify((t, functions), expressions, modules='numpy')
+
+    def system_of_equations(t, y):
+        return lamdified_eq(t, y)
+
+    params = system_of_equations, t_values, init_t, init_func_list
+    return solve_numerically_first_order_ode(*params, method=method)
 
 
-def calculate_numerically_list_of_trajectories(expressions, functions, t, t_bound, t_0, boundaries,
-                                               inits, output_size, with_t_array=False, t_eval=None):
+def solve_numerically_second_order_ode(diff_equation, x, t, t_values, init_t, init_func_list, method='RK45'):
+    v = sp.Function('v')(t)
+    x_diff_eq = v
+    v_diff_eq = sp.solve(diff_equation, x.diff(t, 2)[0]).subs(x.diff(t), v)
+    params = [x_diff_eq, v_diff_eq], [x, v], t, t_values, init_t, init_func_list
+    return solve_numerically_system_of_equations(*params, method=method)
+
+
+def calculate_numerically_list_of_trajectories(expressions, functions, t, t_values, init_t, axis_thresholds, inits,
+                                               with_t_array=False, method='RK45'):
     trajectories = []
     for initial_point in inits:
         t_range, trajectory = solve_numerically_system_of_equations(
-            expressions, functions, t, t_bound, t_0, initial_point, output_size, t_eval=t_eval
+            expressions, functions, t, t_values, init_t, initial_point, method=method
         )
         trajectory_axes = [t_range] if with_t_array else []
-        for index, (lower_bound, upper_bound) in enumerate(boundaries):
+        for index, (lower_bound, upper_bound) in enumerate(axis_thresholds):
             trajectory_axis = trajectory[index]
             if lower_bound is not None:
                 trajectory_axis[trajectory_axis < lower_bound] = np.nan
@@ -98,27 +91,12 @@ def calculate_numerically_list_of_trajectories(expressions, functions, t, t_boun
     return trajectories
 
 
-def plot_numeric_solutions(diff_equation, x, f, initial_conditions_y, initial_x, span, size, axes, threshold=None):
-    lambdified_eq = sp.lambdify((x, f), diff_equation, 'numpy')
-
-    def first_order_equation(x, f):
-        return lambdified_eq(x, f)
-
-    x_range, sol = solve_differential_equation(first_order_equation, *span, initial_x, initial_conditions_y, size)
-    for index, y0 in enumerate(initial_conditions_y):
-        y_values = sol[index]
-        if threshold is not None:
-            y_values[y_values < threshold[0]] = np.nan
-            y_values[y_values > threshold[1]] = np.nan
-        axes.plot(x_range, y_values, label=f'$y({initial_x}) = {y0}$')
-
-
-def convert_equations_to_meshgrid(equations, variables, params, normalize=False, damping_factor=0):
-    equation_x, equation_v = equations
-    x_var, v_var = variables
+def convert_equations_to_meshgrid(expressions, functions, params, normalize=False, damping_factor=0):
+    expression_x, expression_v = expressions
+    x_var, v_var = functions
     x_0, x_k, x_step, v_0, v_k, v_step = params
-    lambdified_x = sp.lambdify([x_var, v_var], equation_x.rhs, 'numpy')
-    lambdified_v = sp.lambdify([x_var, v_var], equation_v.rhs, 'numpy')
+    lambdified_x = sp.lambdify([x_var, v_var], expression_x, 'numpy')
+    lambdified_v = sp.lambdify([x_var, v_var], expression_v, 'numpy')
     X, V = np.meshgrid(np.arange(x_0, x_k + x_step, x_step), np.arange(v_0, v_k + v_step, v_step))
     dx = lambdified_x(X, V)
     dv = lambdified_v(X, V)
@@ -135,36 +113,35 @@ def convert_equations_to_meshgrid(equations, variables, params, normalize=False,
     return X, V, dx, dv
 
 
-def phase_portrait(equations, variables, params, axes, normalize=False, damping_factor=0):
-    meshgrid = convert_equations_to_meshgrid(equations, variables, params,
+def phase_portrait(expressions, functions, params, axes, normalize=False, damping_factor=0):
+    meshgrid = convert_equations_to_meshgrid(expressions, functions, params,
                                              normalize=normalize,
                                              damping_factor=damping_factor)
     axes.quiver(*meshgrid, pivot='mid')
-    axes.set(xlabel=f'${sp.latex(variables[0])}$', ylabel=f'${sp.latex(variables[1])}$')
+    axes.set(xlabel=f'${sp.latex(functions[0])}$', ylabel=f'${sp.latex(functions[1])}$')
 
 
-def phase_trajectory(diff_solution, t, params, threshold=None, second_solution=None):
-    t_0, t_k, quality = params
-    t_values = np.linspace(t_0, t_k, quality)
-    lambdified_x = sp.lambdify(t, diff_solution.rhs, 'numpy')
-    if second_solution is None:
-        lambdified_v = sp.lambdify(t, diff_solution.rhs.diff(t), 'numpy')
+def phase_trajectory(expression, t, t_values, axis_thresholds=None, second_expression=None):
+    lambdified_x = sp.lambdify(t, expression, 'numpy')
+    if second_expression is None:
+        lambdified_v = sp.lambdify(t, expression.diff(t), 'numpy')
     else:
-        lambdified_v = sp.lambdify(t, second_solution.rhs, 'numpy')
+        lambdified_v = sp.lambdify(t, second_expression, 'numpy')
     x_values, v_values = lambdified_x(t_values), lambdified_v(t_values)
-    if threshold is not None:
-        x_values[x_values < threshold[0]] = np.nan
-        x_values[x_values > threshold[1]] = np.nan
-        v_values[v_values < threshold[2]] = np.nan
-        v_values[v_values > threshold[3]] = np.nan
-    return t_values, x_values, v_values
+    if axis_thresholds is not None:
+        for trajectory_axis, (lower_bound, upper_bound) in zip([x_values, v_values], axis_thresholds):
+            if lower_bound is not None:
+                trajectory_axis[trajectory_axis < lower_bound] = np.nan
+            if upper_bound is not None:
+                trajectory_axis[trajectory_axis > upper_bound] = np.nan
+    return x_values, v_values
 
 
 def find_fixed_point_abcd(P, Q, x, y):
-    a = P.rhs.diff(x)
-    b = P.rhs.diff(y)
-    c = Q.rhs.diff(x)
-    d = Q.rhs.diff(y)
+    a = P.diff(x)
+    b = P.diff(y)
+    c = Q.diff(x)
+    d = Q.diff(y)
     return a, b, c, d
 
 
