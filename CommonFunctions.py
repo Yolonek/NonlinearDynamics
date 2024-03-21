@@ -202,7 +202,7 @@ def evaluate_list_of_equation_solutions(solutions):
 @nb.njit()
 def logistic_map(x_0, n, expression, *params):
     # expression has to be jit() compiled
-    x_range = np.zeros(n, dtype=nb.float32)
+    x_range = np.zeros(n, dtype=nb.float64)
     for index, x in enumerate(x_range):
         if index == 0:
             x_range[index] = x_0
@@ -211,9 +211,9 @@ def logistic_map(x_0, n, expression, *params):
             x_range[index] = expression(x_prev, *params)
     return x_range
 
+
 @nb.njit()
 def logistic_map_parameter_dependence(x_0, n, expression, param_array, *other_params):
-    # parameter_diagram = np.array([])
     for index, param in enumerate(param_array):
         x_array = logistic_map(x_0, n, expression, param, *other_params)
         if index == 0:
@@ -221,4 +221,17 @@ def logistic_map_parameter_dependence(x_0, n, expression, param_array, *other_pa
         else:
             parameter_diagram = np.concatenate((parameter_diagram, x_array[None, :]), axis=0)
     return parameter_diagram
+
+
+@nb.njit()
+def calculate_liapunov_exponent(sequence, expression, *params):
+    return np.sum(np.log(np.abs(expression(sequence, *params)))) / len(sequence)
+
+
+@nb.njit()
+def calculate_liapunov_exponent_for_diagram(diagram, param_array, expression, *other_params):
+    liapunov_array = np.zeros(diagram.shape[0])
+    for index, (sequence, param) in enumerate(zip(diagram, param_array)):
+        liapunov_array[index] = calculate_liapunov_exponent(sequence, expression, param, *other_params)
+    return liapunov_array
 
