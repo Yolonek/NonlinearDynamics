@@ -1,5 +1,6 @@
 import sympy as sp
 import numpy as np
+import numba as nb
 from scipy.integrate import solve_ivp
 from matplotlib import pyplot as plt
 
@@ -196,3 +197,28 @@ def plot_colored_line3d(x, y, z, array, axes, colormap_type='viridis', return_cm
 
 def evaluate_list_of_equation_solutions(solutions):
     return [tuple(component.evalf() for component in point) for point in solutions]
+
+
+@nb.njit()
+def logistic_map(x_0, n, expression, *params):
+    # expression has to be jit() compiled
+    x_range = np.zeros(n, dtype=nb.float32)
+    for index, x in enumerate(x_range):
+        if index == 0:
+            x_range[index] = x_0
+        else:
+            x_prev = x_range[index-1]
+            x_range[index] = expression(x_prev, *params)
+    return x_range
+
+@nb.njit()
+def logistic_map_parameter_dependence(x_0, n, expression, param_array, *other_params):
+    # parameter_diagram = np.array([])
+    for index, param in enumerate(param_array):
+        x_array = logistic_map(x_0, n, expression, param, *other_params)
+        if index == 0:
+            parameter_diagram = x_array[None, :]
+        else:
+            parameter_diagram = np.concatenate((parameter_diagram, x_array[None, :]), axis=0)
+    return parameter_diagram
+
