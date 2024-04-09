@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+sympy = "==1.12"
+numpy = "==1.23.2"
+matplotlib = "==3.7.3"
+jupyterlab = "==4.0.6"
+numba = "==0.58.1"
+scipy = "==1.11.3"
+
+[dev-packages]
+
+[requires]
+python_version = "3.9"
