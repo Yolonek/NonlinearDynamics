@@ -6,12 +6,18 @@ Project goal was to analyze materials from lecture **Nonlinear Dynamics** at my 
 
 ## Images
 
-### Logistic Maps
+# Logistic Maps
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L4-LogisticMap05.png" alt="L4.1" width="200">
+    <img src="./images/L4-LogisticMap06.png" alt="L4.1" width="200">
+</div>
+
 ![](./images/L4-LogisticMap05.png)
 ![](./images/L4-LogisticMap06.png)
 ![](./images/L4-LogisticMap13.png)
 
-### Phase Plane Portrait
+# Phase Plane Portrait
 
 ![](./images/L1-PhasePortrait1.png)
 ![](./images/L1-PhasePortrait2.png)
@@ -21,20 +27,20 @@ Project goal was to analyze materials from lecture **Nonlinear Dynamics** at my 
 ![](./images/W2-PhasePlanePortrait07.png)
 ![](./images/W3-StationaryPoints1.png)
 
-### Harmonic Oscillator
+# Harmonic Oscillator
 
 ![](./images/L2-HarmonicOscillator2.png)
 ![](./images/L2-HarmonicOscillator6.png)
 ![](./images/L2-HarmonicOscillator7.png)
 
-### Deterministic Chaos
+# Deterministic Chaos
 
 ![](./images/W4-PeriodDoubling3.png)
 ![](./images/W4-PeriodDoubling5.png)
 ![](./images/L3-DeterministicChaos04.png)
 ![](./images/L3-DeterministicChaos07.png)
 
-### Reconstructing Attractors
+# Reconstructing Attractors
 
 ![](./images/L5-ReconstructingAttractor06.png)
 ![](./images/L5-ReconstructingAttractor07.png)
