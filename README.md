@@ -9,29 +9,49 @@ Project goal was to analyze materials from lecture **Nonlinear Dynamics** at my 
 # Logistic Maps
 
 <div style="display: flex; justify-content: space-between;">
-    <img src="./images/L4-LogisticMap05.png" alt="L4.1" width="200">
-    <img src="./images/L4-LogisticMap06.png" alt="L4.1" width="200">
+    <img src="./images/L4-LogisticMap05.png" alt="L4.5" width="400">
+    <img src="./images/L4-LogisticMap06.png" alt="L4.6" width="400">
 </div>
 
-![](./images/L4-LogisticMap05.png)
-![](./images/L4-LogisticMap06.png)
-![](./images/L4-LogisticMap13.png)
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L4-LogisticMap12.png" alt="L4.12" width="400">
+    <img src="./images/L4-LogisticMap13.png" alt="L4.13" width="400">
+</div>
 
 # Phase Plane Portrait
 
-![](./images/L1-PhasePortrait1.png)
-![](./images/L1-PhasePortrait2.png)
-![](./images/L1-PhasePortrait3.png)
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L1-PhasePortrait1.png" alt="L1.1" width="400">
+    <img src="./images/W3-StationaryPoints1.png" alt="W3.1" width="400">
+</div>
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L1-PhasePortrait2.png" alt="L1.2" width="400">
+    <img src="./images/L1-PhasePortrait3.png" alt="L1.3" width="400">
+</div>
+
 ![](./images/W2-PhasePlanePortrait02.png)
 ![](./images/W2-PhasePlanePortrait03.png)
 ![](./images/W2-PhasePlanePortrait07.png)
-![](./images/W3-StationaryPoints1.png)
+
 
 # Harmonic Oscillator
 
-![](./images/L2-HarmonicOscillator2.png)
-![](./images/L2-HarmonicOscillator6.png)
-![](./images/L2-HarmonicOscillator7.png)
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L2-HarmonicOscillator1.png" alt="L2.1" width="250">
+    <img src="./images/L2-HarmonicOscillator2.png" alt="L2.2" width="250">
+    <img src="./images/L2-HarmonicOscillator3.png" alt="L2.2" width="250">
+</div>
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L2-HarmonicOscillator4.png" alt="L2.4" width="400">
+    <img src="./images/L2-HarmonicOscillator5.png" alt="L2.5" width="400">
+</div>
+
+<div style="display: flex; justify-content: space-between;">
+    <img src="./images/L2-HarmonicOscillator6.png" alt="L2.6" width="400">
+    <img src="./images/L2-HarmonicOscillator7.png" alt="L2.7" width="400">
+</div>
 
 # Deterministic Chaos
 
